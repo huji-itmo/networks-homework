@@ -1,0 +1,16 @@
+[project]
+name = "signal-plotter"
+version = "0.1.0"
+description = "Библиотека для отображения сигналов в компьютерных сетях"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib>=3.8.0",
+    "numpy>=1.24.0",
+]
+
+[project.scripts]
+plot-signal = "signal_plotter.example:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
