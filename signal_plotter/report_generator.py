@@ -4,28 +4,29 @@
 
 import os
 from pathlib import Path
+
 import numpy as np
 
+from signal_plotter import SignalPlotter
 from signal_plotter.encodings import (
-    bytes_to_bits,
-    nrz_encode,
-    manchester_encode,
-    rz_encode,
     ami_encode,
+    bytes_to_bits,
     encode_4b5b,
+    manchester_encode,
+    nrz_encode,
+    rz_encode,
     scramble,
 )
 from signal_plotter.metrics import (
-    calculate_nrz_metrics,
-    calculate_manchester_metrics,
-    calculate_rz_metrics,
-    calculate_ami_metrics,
+    EncodingMetrics,
     calculate_4b5b_nrz_metrics,
+    calculate_ami_metrics,
+    calculate_manchester_metrics,
+    calculate_nrz_metrics,
+    calculate_rz_metrics,
     calculate_scrambled_nrz_metrics,
     find_max_consecutive,
-    EncodingMetrics,
 )
-from signal_plotter import SignalPlotter
 
 
 def hex_to_bytes(hex_str: str) -> bytes:
@@ -389,7 +390,7 @@ def generate_report(
 
 def main():
     """Точка входа."""
-    generate_report(hex_data="B2699C", bit_rate=100.0)
+    generate_report(hex_data="C2C8C0", bit_rate=100.0)
 
 
 if __name__ == "__main__":

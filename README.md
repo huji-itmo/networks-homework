@@ -83,6 +83,25 @@ python -m signal_plotter.encoding_example  # кодирование сигнал
 python -m signal_plotter.metrics_example   # расчет метрик
 ```
 
+### Генерация отчёта
+
+```bash
+python -m signal_plotter.report_generator
+```
+
+Отчёт и графики сохраняются в папку `output/`.
+
+**Изменение входных данных:**  
+Отредактируйте файл `signal_plotter/report_generator.py`, найдите функцию `main()` и измените параметры:
+
+```python
+def main():
+    generate_report(hex_data="C2C8C0", bit_rate=100.0)
+```
+
+- `hex_data` — исходные данные в hex-формате (по умолчанию "C2C8C0")
+- `bit_rate` — скорость передачи в Мбит/с (по умолчанию 100.0)
+
 ## Тесты
 
 ```bash

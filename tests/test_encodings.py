@@ -119,13 +119,13 @@ class Test4B5B:
         from signal_plotter.encodings import encode_4b5b
 
         result = encode_4b5b([0, 0, 0, 1])
-        assert result == [1, 0, 1, 0, 0]
+        assert result == [0, 1, 0, 0, 1]
 
     def test_1111(self):
         from signal_plotter.encodings import encode_4b5b
 
         result = encode_4b5b([1, 1, 1, 1])
-        assert result == [1, 1, 0, 0, 0]
+        assert result == [1, 1, 1, 0, 1]
 
     def test_multiple_nibbles(self):
         from signal_plotter.encodings import encode_4b5b
