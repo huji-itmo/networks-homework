@@ -11,7 +11,7 @@ uv sync
 
 ## Использование
 
-### Python-скрипт
+### Построение графиков сигналов
 
 ```python
 from signal_plotter import SignalPlotter, plot_signal
@@ -43,11 +43,50 @@ fig = plotter.plot_bipolar_signal(
 )
 ```
 
+### Физическое кодирование (NRZ, Manchester, RZ, AMI)
+
+```python
+from signal_plotter.encodings import encode_data, bytes_to_bits
+from signal_plotter.metrics import (
+    calculate_nrz_metrics,
+    calculate_manchester_metrics,
+    calculate_rz_metrics,
+    calculate_ami_metrics,
+    generate_report
+)
+
+# Кодирование данных
+data = bytes([0xB2, 0x69, 0x9C])
+signal = encode_data(data, "nrz")
+
+# Расчет метрик
+bits = bytes_to_bits(data)
+m = calculate_nrz_metrics(bits, bit_rate=100)
+print(f"Полоса: {m.bandwidth} МГц")
+
+# Генерация отчета
+metrics_list = [
+    calculate_nrz_metrics(bits, 100),
+    calculate_manchester_metrics(bits, 100),
+    calculate_rz_metrics(bits, 100),
+    calculate_ami_metrics(bits, 100),
+]
+report = generate_report(metrics_list, bit_rate=100)
+print(report)
+```
+
 ### Запуск примеров
 
 ```bash
-source .venv/bin/activate
-python -m signal_plotter.example
+python -m signal_plotter.example      # примеры графиков
+python -m signal_plotter.encoding_example  # кодирование сигналов
+python -m signal_plotter.metrics_example   # расчет метрик
+```
+
+## Тесты
+
+```bash
+pytest tests/ -v
 ```
 
 ## Команды UV
