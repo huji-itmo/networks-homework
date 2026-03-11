@@ -122,7 +122,31 @@ def main():
     )
     plt.close(fig)
 
-    print("\n8. Быстрый вызов с помощью функции plot_signal():")
+    print("\n8. Биполярный сигнал (-1, 0, 1):")
+    levels = [1, -1, 1, 0, -1, 1]
+    fig = plotter.plot_bipolar_signal(
+        levels=levels,
+        bit_time=1.0,
+        transition_time=0.0,
+        samples_per_bit=100,
+        title="Биполярный сигнал: " + "".join(map(str, levels)),
+        output_path="output/bipolar_signal.png",
+    )
+    plt.close(fig)
+
+    print("\n9. Биполярный сигнал с плавным переходом:")
+    levels = [1, 0, -1, 0, 1, 0, -1]
+    fig = plotter.plot_bipolar_signal(
+        levels=levels,
+        bit_time=1.0,
+        transition_time=0.3,
+        samples_per_bit=100,
+        title="Биполярный сигнал с плавным переходом",
+        output_path="output/bipolar_signal_transition.png",
+    )
+    plt.close(fig)
+
+    print("\n10. Быстрый вызов с помощью функции plot_signal():")
     fig = plot_signal(
         signal_func=lambda t: np.sin(4 * np.pi * t),
         num_samples=500,

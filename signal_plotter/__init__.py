@@ -187,6 +187,75 @@ class SignalPlotter:
             time_range=(0, total_time),
         )
 
+    def plot_bipolar_signal(
+        self,
+        levels: list[int],
+        bit_time: float = 1.0,
+        transition_time: float = 0.0,
+        samples_per_bit: int = 100,
+        title: str = "Биполярный сигнал",
+        output_path: Optional[str] = None,
+        format: Literal["png", "pdf", "svg"] = "png",
+    ) -> Figure:
+        """
+        Построение биполярного сигнала (значения: -1, 0, 1).
+
+        Args:
+            levels: Список уровней сигнала (-1, 0 или 1)
+            bit_time: Время на один уровень
+            transition_time: Время перехода между состояниями (0 = мгновенный)
+            samples_per_bit: Количество точек на каждый уровень
+            title: Заголовок графика
+            output_path: Путь для сохранения
+            format: Формат вывода
+
+        Returns:
+            Объект Figure
+        """
+        total_time = len(levels) * bit_time
+        num_samples = len(levels) * samples_per_bit
+        t = np.linspace(0, total_time, num_samples)
+
+        def signal_func(t_arr: np.ndarray) -> np.ndarray:
+            result = np.zeros_like(t_arr)
+
+            for i, level in enumerate(levels):
+                level_start = i * bit_time
+                level_end = (i + 1) * bit_time
+
+                prev_level = levels[i - 1] if i > 0 else level
+
+                if transition_time > 0:
+                    in_transition = (t_arr >= level_start - transition_time / 2) & (
+                        t_arr < level_start + transition_time / 2
+                    )
+                    transition_progress = (
+                        t_arr[in_transition] - (level_start - transition_time / 2)
+                    ) / transition_time
+                    result[in_transition] = (
+                        prev_level + (level - prev_level) * transition_progress
+                    )
+
+                    in_steady = (t_arr >= level_start + transition_time / 2) & (
+                        t_arr < level_end
+                    )
+                    result[in_steady] = level
+                else:
+                    mask = (t_arr >= level_start) & (t_arr < level_end)
+                    result[mask] = level
+
+            return result
+
+        return self.plot_signal(
+            signal_func=signal_func,
+            num_samples=num_samples,
+            title=title,
+            y_range=(-1.1, 1.1),
+            output_path=output_path,
+            format=format,
+            time_range=(0, total_time),
+        )
+
 
 def plot_signal(
     signal_func: Callable[[np.ndarray], np.ndarray],
