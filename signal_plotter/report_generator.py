@@ -4,6 +4,7 @@
 
 import os
 from pathlib import Path
+import numpy as np
 
 from signal_plotter.encodings import (
     bytes_to_bits,
@@ -105,11 +106,11 @@ def generate_report(
 
     plotter = SignalPlotter(figsize=(16, 3), dpi=150)
 
-    def make_plot(signal_array):
+    def make_plot(sig, duration):
         def wrapper(t_arr):
-            indices = (t_arr * (len(signal_array) - 1)).astype(int)
-            indices = indices.clip(0, len(signal_array) - 1)
-            return signal_array[indices]
+            indices = np.round(t_arr / duration * (len(sig) - 1)).astype(int)
+            indices = np.clip(indices, 0, len(sig) - 1)
+            return sig[indices]
 
         return wrapper
 
@@ -134,16 +135,8 @@ def generate_report(
 
         signal_arr = signal
 
-        def make_plot(sig):
-            def plot_func(t):
-                indices = (t * (len(sig) - 1)).astype(int)
-                indices = indices.clip(0, len(sig) - 1)
-                return sig[indices]
-
-            return plot_func
-
         fig = plotter.plot_signal(
-            signal_func=make_plot(signal),
+            signal_func=make_plot(signal, len(signal)),
             num_samples=len(signal) * 10,
             title=f"{method_name}: {format_bits(bits)[:16]}...",
             y_range=(-1.3, 1.3),
@@ -203,7 +196,7 @@ def generate_report(
     signal_4b5b = nrz_encode(encoded_bits)
 
     fig = plotter.plot_signal(
-        signal_func=make_plot(signal_4b5b),
+        signal_func=make_plot(signal_4b5b, len(signal_4b5b)),
         num_samples=len(signal_4b5b) * 10,
         title=f"4B/5B: {format_bits(encoded_bits)[:20]}...",
         y_range=(-1.3, 1.3),
@@ -250,7 +243,7 @@ def generate_report(
     signal_scrambled = nrz_encode(scrambled_bits)
 
     fig = plotter.plot_signal(
-        signal_func=make_plot(signal_scrambled),
+        signal_func=make_plot(signal_scrambled, len(signal_scrambled)),
         num_samples=len(signal_scrambled) * 10,
         title=f"Scrambled NRZ: {format_bits(scrambled_bits)[:20]}...",
         y_range=(-1.3, 1.3),
