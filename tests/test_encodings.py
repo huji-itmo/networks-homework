@@ -108,5 +108,94 @@ class TestAMI:
         np.testing.assert_array_equal(result, [5, 0, -5])
 
 
+class Test4B5B:
+    def test_0000(self):
+        from signal_plotter.encodings import encode_4b5b, decode_4b5b
+
+        result = encode_4b5b([0, 0, 0, 0])
+        assert result == [1, 1, 1, 1, 0]
+
+    def test_0001(self):
+        from signal_plotter.encodings import encode_4b5b
+
+        result = encode_4b5b([0, 0, 0, 1])
+        assert result == [1, 0, 1, 0, 0]
+
+    def test_1111(self):
+        from signal_plotter.encodings import encode_4b5b
+
+        result = encode_4b5b([1, 1, 1, 1])
+        assert result == [1, 1, 0, 0, 0]
+
+    def test_multiple_nibbles(self):
+        from signal_plotter.encodings import encode_4b5b
+
+        result = encode_4b5b([1, 1, 0, 0, 0, 0, 1, 0])
+        assert len(result) == 10
+
+    def test_padding(self):
+        from signal_plotter.encodings import encode_4b5b
+
+        result = encode_4b5b([1, 0, 1])
+        assert len(result) == 5
+
+    def test_decode(self):
+        from signal_plotter.encodings import encode_4b5b, decode_4b5b
+
+        original = [1, 1, 0, 0, 0, 0, 1, 0]
+        encoded = encode_4b5b(original)
+        decoded = decode_4b5b(encoded)
+        assert decoded == original
+
+    def test_max_consecutive_zeros(self):
+        from signal_plotter.encodings import encode_4b5b
+        from signal_plotter.metrics import find_max_consecutive
+
+        bits = [0, 0, 0, 0, 0, 0]
+        encoded = encode_4b5b(bits)
+        max_zeros = find_max_consecutive(encoded, 0)
+        assert max_zeros <= 3
+
+
+class TestScrambling:
+    def test_scramble_basic(self):
+        from signal_plotter.encodings import scramble
+
+        bits = [1, 1, 0, 0, 0, 0, 1, 0]
+        result = scramble(bits)
+        assert len(result) == len(bits)
+
+    def test_scramble_all_zeros(self):
+        from signal_plotter.encodings import scramble
+
+        bits = [0] * 10
+        result = scramble(bits)
+        assert len(result) == 10
+
+    def test_scramble_all_ones(self):
+        from signal_plotter.encodings import scramble
+
+        bits = [1] * 10
+        result = scramble(bits)
+        assert len(result) == 10
+
+    def test_scramble_decode(self):
+        from signal_plotter.encodings import scramble, unscramble
+
+        bits = [1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0]
+        scrambled = scramble(bits)
+        unscrambled = unscramble(scrambled)
+        assert unscrambled == bits
+
+    def test_scramble_max_consecutive_zeros(self):
+        from signal_plotter.encodings import scramble
+        from signal_plotter.metrics import find_max_consecutive
+
+        bits = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0]
+        scrambled = scramble(bits)
+        max_zeros = find_max_consecutive(scrambled, 0)
+        assert max_zeros <= 3
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

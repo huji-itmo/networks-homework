@@ -8,12 +8,16 @@ from signal_plotter.encodings import (
     manchester_encode,
     rz_encode,
     ami_encode,
+    encode_4b5b,
+    scramble,
 )
 from signal_plotter.metrics import (
     calculate_nrz_metrics,
     calculate_manchester_metrics,
     calculate_rz_metrics,
     calculate_ami_metrics,
+    calculate_4b5b_nrz_metrics,
+    calculate_scrambled_nrz_metrics,
     generate_report,
     EncodingMetrics,
 )
@@ -48,6 +52,18 @@ def main():
     m = calculate_ami_metrics(bits, bit_rate)
     metrics_list.append(m)
     print(f"AMI: f_high={m.f_high}, f_low={m.f_low}, bandwidth={m.bandwidth}")
+
+    encoded_bits = encode_4b5b(bits)
+    m = calculate_4b5b_nrz_metrics(bits, encoded_bits, bit_rate)
+    metrics_list.append(m)
+    print(
+        f"4B/5B+NRZ: f_high={m.f_high}, f_low={m.f_low}, bandwidth={m.bandwidth}, channel_rate={m.channel_rate}"
+    )
+
+    scrambled_bits = scramble(bits)
+    m = calculate_scrambled_nrz_metrics(bits, scrambled_bits, bit_rate)
+    metrics_list.append(m)
+    print(f"Scrambled NRZ: f_high={m.f_high}, f_low={m.f_low}, bandwidth={m.bandwidth}")
 
     report = generate_report(metrics_list, bit_rate)
 
