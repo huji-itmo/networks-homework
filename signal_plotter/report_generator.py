@@ -134,8 +134,6 @@ def generate_report(
     for method_name, encode_func, metrics_func in methods:
         signal = encode_func(bits)
 
-        signal_arr = signal
-
         fig = plotter.plot_signal(
             signal_func=make_plot(signal, len(signal)),
             num_samples=len(signal) * 10,
@@ -314,7 +312,7 @@ def generate_report(
     report_lines.append("")
 
     min_bandwidth = min(m.bandwidth for m in metrics_list)
-    best_methods = [m for m in metrics_list if m.bandwidth == min_bandwidth]
+    # best_methods = [m for m in metrics_list if m.bandwidth == min_bandwidth]
 
     report_lines.append(
         f"1. **Минимальную полосу пропускания** требуют методы NRZ, AMI и Scrambled NRZ: **{min_bandwidth:.1f} МГц**. "
@@ -340,7 +338,7 @@ def generate_report(
         f"   - Manchester требует полосу в 2 раза больше ({manchester_metrics.bandwidth:.1f} vs {nrz_metrics.bandwidth:.1f} МГц)"
     )
     report_lines.append(
-        f"   - Но Manchester обеспечивает гарантированную синхронизацию благодаря переходу в середине каждого бита"
+        "   - Но Manchester обеспечивает гарантированную синхронизацию благодаря переходу в середине каждого бита"
     )
     report_lines.append("")
 
@@ -357,7 +355,7 @@ def generate_report(
     report_lines.append("")
 
     report_lines.append("5. **Скремблирование:**")
-    report_lines.append(f"   - Не увеличивает скорость (избыточность 0%)")
+    report_lines.append("   - Не увеличивает скорость (избыточность 0%)")
     report_lines.append(
         f"   - Сокращает максимальную серию нулей с {find_max_consecutive(bits, 0)} до {find_max_consecutive(scrambled_bits, 0)}"
     )
@@ -390,7 +388,7 @@ def generate_report(
 
 def main():
     """Точка входа."""
-    generate_report(hex_data="C2C8C0", bit_rate=100.0)
+    generate_report(hex_data="C3C4C2", bit_rate=100.0)
 
 
 if __name__ == "__main__":

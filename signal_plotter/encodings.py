@@ -3,8 +3,9 @@
 Для курса "Компьютерные сети"
 """
 
-import numpy as np
 from typing import Literal
+
+import numpy as np
 
 
 def bytes_to_bits(data: bytes) -> list[int]:
@@ -160,7 +161,7 @@ def encode_4b5b(bits: list[int]) -> list[int]:
         nibble = tuple(bits[i : i + 4])
         if nibble not in _4B5B_TABLE:
             raise ValueError(f"Некорректный ниббл: {nibble}")
-        result.extend(_4B5B_TABLE[nibble])
+        result.extend(_4B5B_TABLE[nibble])  # pyright: ignore[reportArgumentType]
 
     return result
 
@@ -183,7 +184,7 @@ def decode_4b5b(bits: list[int]) -> list[int]:
         symbol = tuple(bits[i : i + 5])
         if symbol not in _INVERTED_4B5B_TABLE:
             raise ValueError(f"Некорректный 5-битный символ: {symbol}")
-        result.extend(_INVERTED_4B5B_TABLE[symbol])
+        result.extend(_INVERTED_4B5B_TABLE[symbol])  # pyright: ignore[reportArgumentType]
 
     return result
 
