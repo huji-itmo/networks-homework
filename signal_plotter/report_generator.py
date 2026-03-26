@@ -306,7 +306,50 @@ def generate_report(
 
     report_lines.append("")
 
-    report_lines.append("## 7. Выводы")
+    report_lines.append("## 7. Формулы для расчёта частот")
+    report_lines.append("")
+    report_lines.append("### Основные формулы")
+    report_lines.append("")
+    report_lines.append(
+        "- **Максимальная частота**: f_в = C / 2 (для двухуровневых сигналов NRZ, 4B/5B, скремблирование)"
+    )
+    report_lines.append(
+        "- **Максимальная частота (Manch)**: f_в = C (для манчестерского кодирования)"
+    )
+    report_lines.append(
+        "- **Минимальная частота**: f_н = C / (2 × N_max), где N_max — максимальная серия нулей"
+    )
+    report_lines.append("- **Требуемая полоса**: Δf = f_в - f_н")
+    report_lines.append("")
+    report_lines.append("### Расчёт для методов")
+    report_lines.append("")
+    report_lines.append("| Метод | f_в (МГц) | f_н (МГц) | Δf (МГц) | Примечание |")
+    report_lines.append("|-------|-----------|-----------|----------|------------|")
+
+    for m in metrics_list:
+        note = ""
+        if m.encoding_name == "NRZ":
+            note = "N_max = 4"
+        elif "Manchester" in m.encoding_name:
+            note = "Переход каждый бит"
+        elif m.encoding_name == "RZ":
+            note = "N_max = 2"
+        elif m.encoding_name == "AMI":
+            note = "N_max = 5"
+        elif m.encoding_name == "4B/5B+NRZ":
+            note = f"C = {m_4b5b.channel_rate:.0f} Мбит/с"
+        elif "Scrambled" in m.encoding_name:
+            note = "N_max = 3"
+
+        f_high = f"{m.f_high:.1f}"
+        f_low = f"{m.f_low:.1f}"
+        bw = f"{m.bandwidth:.1f}"
+        report_lines.append(
+            f"| {m.encoding_name} | {f_high} | {f_low} | {bw} | {note} |"
+        )
+
+    report_lines.append("")
+    report_lines.append("## 8. Выводы")
     report_lines.append("")
     report_lines.append("### Анализ результатов")
     report_lines.append("")
