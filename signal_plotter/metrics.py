@@ -42,8 +42,8 @@ class EncodingMetrics:
         if self.f_high is not None and self.f_low is not None:
             self.f_mid = (self.f_high + self.f_low) / 2
             self.spectrum_width = self.f_high - self.f_low
-        if self.bandwidth is None and self.f_high is not None:
-            self.bandwidth = self.f_high
+            if self.bandwidth is None:
+                self.bandwidth = self.f_high - self.f_low
         if self.channel_rate is None:
             self.channel_rate = self.bit_rate
 

@@ -175,17 +175,191 @@ def generate_report(
         report_lines.append("")
 
         report_lines.append("**Характеристики:**")
-        report_lines.append(f"- Верхняя граница частоты: **{m.f_high:.2f} МГц**")
-        report_lines.append(f"- Нижняя граница частоты: **{m.f_low:.2f} МГц**")
-        report_lines.append(
-            f"- Требуемая полоса пропускания: **{m.bandwidth:.2f} МГц**"
-        )
-        report_lines.append(f"- Уровней сигнала: {m.signal_levels}")
-        report_lines.append(
-            f"- Постоянная составляющая (DC): {'Да' if m.has_dc_component else 'Нет'}"
-        )
-        if m.max_consecutive_zeros:
+        report_lines.append("")
+
+        if method_name == "NRZ":
+            nmax = max(m.max_consecutive_zeros, m.max_consecutive_ones)
+            report_lines.append("**Верхняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{bit_rate:.0f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "Деление на 2 связано с тем, что наихудший случай для NRZ — чередование 101010. "
+                "При этом формируется меандр с периодом в 2 бита, то есть частота равна половине битовой скорости."
+            )
+            report_lines.append("")
+            report_lines.append("**Нижняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot N_{{max}}}} = \\frac{{{bit_rate:.0f}}}{{2 \\cdot {nmax}}} = \\frac{{{bit_rate:.0f}}}{{2 * {nmax}}} = {m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"где $N_{{max}} = {nmax}$ — максимальная длина серии одинаковых бит "
+                f"(нули: {m.max_consecutive_zeros}, единицы: {m.max_consecutive_ones})"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "Чем длиннее серия одинаковых бит, тем медленнее меняется сигнал и тем ниже "
+                "нижняя граница спектра. Длинная серия нулей или единиц эквивалентна низкочастотному "
+                "составляющему, поэтому $N_{max}$ определяет минимальную частоту."
+            )
+            report_lines.append("")
+            report_lines.append("**Полоса пропускания:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(f"- Уровней сигнала: {m.signal_levels}")
+            report_lines.append(
+                f"- Постоянная составляющая (DC): {'Да' if m.has_dc_component else 'Нет'}"
+            )
+            if m.has_dc_component:
+                report_lines.append(
+                    "  NRZ имеет постоянную составляющую, потому что средний уровень сигнала "
+                    "зависит от соотношения нулей и единиц в данных. Если единиц больше, "
+                    "среднее значение сигнала смещено вверх от нуля."
+                )
             report_lines.append(f"- Макс. серия нулей: {m.max_consecutive_zeros}")
+            report_lines.append(f"- Макс. серия единиц: {m.max_consecutive_ones}")
+
+        elif method_name == "Manchester":
+            report_lines.append("**Верхняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(f"$$f_{{в}} = C = {bit_rate:.0f} \\text{{ МГц}}$$")
+            report_lines.append("")
+            report_lines.append(
+                "Манчестерское кодирование имеет гарантированный переход в середине "
+                "каждого бита, поэтому максимальная частота равна скорости передачи. "
+                "В отличие от NRZ (где $f_в = C/2$), здесь переход происходит вдвое чаще — "
+                "при чередовании 1010 переходы совпадают и дают период в 1 бит."
+            )
+            report_lines.append("")
+            report_lines.append("**Нижняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2}} = \\frac{{{bit_rate:.0f}}}{{2}} = {m.f_low:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "Даже в наихудшем случае (серия одинаковых бит, например 1111) в середине "
+                "каждого бита происходит переход, поэтому минимальная частота не опускается ниже $C/2$."
+            )
+            report_lines.append("")
+            report_lines.append("**Полоса пропускания:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {bit_rate:.0f} - {m.f_low:.1f} = {m.bandwidth:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(f"- Уровней сигнала: {m.signal_levels}")
+            report_lines.append(
+                f"- Постоянная составляющая (DC): {'Да' if m.has_dc_component else 'Нет'}"
+            )
+            if not m.has_dc_component:
+                report_lines.append(
+                    "  Постоянная составляющая отсутствует, так как каждый бит содержит "
+                    "ровно половину периода на высоком и половину на низком уровне. "
+                    "Среднее значение сигнала всегда равно нулю независимо от данных."
+                )
+
+        elif method_name == "RZ":
+            report_lines.append("**Верхняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(f"$$f_{{в}} = C = {bit_rate:.0f} \\text{{ МГц}}$$")
+            report_lines.append("")
+            report_lines.append(
+                "В методе RZ импульс занимает только половину битового интервала, "
+                "затем сигнал возвращается к нулю. Это эквивалентно тому, что "
+                "длительность импульса вдвое короче, чем у NRZ, поэтому "
+                "спектр расширяется вдвое — максимальная частота равна $C$, а не $C/2$."
+            )
+            report_lines.append("")
+            report_lines.append("**Нижняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{4}} = \\frac{{{bit_rate:.0f}}}{{4}} = {m.f_low:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "Для чередующейся последовательности 101010: каждый импульс HIGH длится "
+                "половину бита, затем ноль на оставшуюся половину бита, затем снова HIGH. "
+                "Период такого сигнала равен 2 бита (1 бит HIGH-импульс + 1 бит пауза/следующий импульс), "
+                "но с учётом возврата к нулю фундаментальная частота получается $C/4$."
+            )
+            report_lines.append("")
+            report_lines.append("**Полоса пропускания:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {bit_rate:.0f} - {m.f_low:.1f} = {m.bandwidth:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(f"- Уровней сигнала: {m.signal_levels}")
+            report_lines.append(
+                "  (три уровня: $+V$, $0$, $-V$ — для единицы используется положительный или "
+                "отрицательный импульс с возвратом к нулю)"
+            )
+            report_lines.append(
+                f"- Постоянная составляющая (DC): {'Да' if m.has_dc_component else 'Нет'}"
+            )
+
+        elif method_name == "AMI":
+            report_lines.append("**Верхняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{bit_rate:.0f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "Как и в NRZ, наихудший случай — чередование бит 101010, дающее меандр с частотой $C/2$."
+            )
+            report_lines.append("")
+            report_lines.append("**Нижняя граница частоты:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot (N_{{max}} + 1)}} = "
+                f"\\frac{{{bit_rate:.0f}}}{{2 \\cdot ({m.max_consecutive_zeros} + 1)}} = "
+                f"\\frac{{{bit_rate:.0f}}}{{2 \\cdot {m.max_consecutive_zeros + 1}}} = "
+                f"\\frac{{{bit_rate:.0f}}}{{2 * {m.max_consecutive_zeros + 1}}} = "
+                f"{m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"где $N_{{max}} = {m.max_consecutive_zeros}$ — максимальная серия нулей в исходном сообщении"
+            )
+            report_lines.append("")
+            report_lines.append(
+                "В AMI нули не несут информации о полярности — они просто означают отсутствие "
+                "сигнала. Серия из $N_{max}$ нулей между двумя единицами создаёт паузу, "
+                "длина которой определяет нижнюю границу спектра. "
+                "Формула содержит $(N_{max} + 1)$, а не просто $N_{max}$, "
+                "потому что нужно учитывать и саму единицу, ограничивающую серию нулей — "
+                "переход от одной единицы к другой через $N_{max}$ нулей занимает $N_{max} + 1$ битовых интервала."
+            )
+            report_lines.append("")
+            report_lines.append("**Полоса пропускания:**")
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(f"- Уровней сигнала: {m.signal_levels}")
+            report_lines.append(
+                "  (три уровня: $+V$, $0$, $-V$ — единицы чередуют полярность, нули — нулевой уровень)"
+            )
+            report_lines.append(
+                f"- Постоянная составляющая (DC): {'Да' if m.has_dc_component else 'Нет'}"
+            )
+            if not m.has_dc_component:
+                report_lines.append(
+                    "  Постоянная составляющая отсутствует, так как положительные и "
+                    "отрицательные импульсы чередуются и компенсируют друг друга."
+                )
+            report_lines.append(f"- Макс. серия нулей: {m.max_consecutive_zeros}")
+
         report_lines.append("")
 
     encoded_bits = encode_4b5b(bits)
@@ -220,17 +394,90 @@ def generate_report(
     report_lines.append(
         f"**Закодированное сообщение:** {format_bits(encoded_bits)} ({len(encoded_bits)} бит)"
     )
-    report_lines.append(f"**Избыточность:** {m_4b5b.redundancy_percent:.1f}%")
-    report_lines.append("")
     report_lines.append("![4B/5B](../output/report_4b5b.png)")
     report_lines.append("")
     report_lines.append("**Характеристики:**")
-    report_lines.append(f"- Скорость в канале: **{m_4b5b.channel_rate:.1f} Мбит/с**")
-    report_lines.append(f"- Верхняя граница частоты: **{m_4b5b.f_high:.2f} МГц**")
-    report_lines.append(f"- Нижняя граница частоты: **{m_4b5b.f_low:.2f} МГц**")
+    report_lines.append("")
+
+    report_lines.append("**Коэффициент расширения:**")
+    report_lines.append("")
     report_lines.append(
-        f"- Требуемая полоса пропускания: **{m_4b5b.bandwidth:.2f} МГц**"
+        f"$$k = \\frac{{L_{{код}}}}{{L_{{исх}}}} = "
+        f"\\frac{{{m_4b5b.encoded_length}}}{{{m_4b5b.original_length}}} = "
+        f"{m_4b5b.expansion_factor:.2f}$$"
     )
+    report_lines.append("")
+    report_lines.append(
+        "Каждые 4 бита данных заменяются на 5-битный символ, поэтому закодированная "
+        "последовательность на 25% длиннее исходной."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Избыточность:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$R = \\frac{{L_{{код}} - L_{{исх}}}}{{L_{{код}}}} \\cdot 100\\% = "
+        f"\\frac{{{m_4b5b.encoded_length} - {m_4b5b.original_length}}}{{{m_4b5b.encoded_length}}} \\cdot 100\\% = "
+        f"\\frac{{{m_4b5b.encoded_length - m_4b5b.original_length}}}{{{m_4b5b.encoded_length}}} \\cdot 100\\% = "
+        f"{m_4b5b.redundancy_percent:.1f}\\%$$"
+    )
+    report_lines.append("")
+    report_lines.append(
+        "Избыточность показывает, какая доля передаваемых бит не несёт полезной "
+        "информации. Здесь 20% бит добавлены специально для обеспечения синхронизации."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Скорость в канале:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$C_{{кан}} = C \\cdot k = {bit_rate:.0f} \\cdot {m_4b5b.expansion_factor:.2f} = {m_4b5b.channel_rate:.1f} \\text{{ Мбит/с}}$$"
+    )
+    report_lines.append("")
+    report_lines.append(
+        "Поскольку в канал передаётся больше бит, чем в исходных данных, "
+        "скорость в канале выше номинальной. Все расчёты частот для 4B/5B "
+        "используют именно $C_{кан}$, а не исходную скорость $C$."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Верхняя граница частоты:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$f_{{в}} = \\frac{{C_{{кан}}}}{{2}} = "
+        f"\\frac{{{m_4b5b.channel_rate:.1f}}}{{2}} = "
+        f"{m_4b5b.f_high:.1f} \\text{{ МГц}}$$"
+    )
+    report_lines.append("")
+
+    report_lines.append("**Нижняя граница частоты:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$f_{{н}} = \\frac{{C_{{кан}}}}{{2 \\cdot N_{{max}}}} = "
+        f"\\frac{{{m_4b5b.channel_rate:.1f}}}{{2 \\cdot 4}} = "
+        f"\\frac{{{m_4b5b.channel_rate:.1f}}}{{8}} = "
+        f"{m_4b5b.f_low:.2f} \\text{{ МГц}}$$"
+    )
+    report_lines.append("")
+    report_lines.append(
+        "где $N_{max} = 4$ — максимальное число нулей подряд после 4B/5B кодирования"
+    )
+    report_lines.append("")
+    report_lines.append(
+        "Таблица 4B/5B гарантирует не более 3 нулей подряд внутри одного 5-битного символа. "
+        "Однако нули могут оказаться на стыке двух соседних символов: "
+        "если символ заканчивается нулями, а следующий начинается нулями, "
+        "серия может достигнуть 4 бит. Именно поэтому в формуле используется $N_{max} = 4$, а не 3."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Полоса пропускания:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$\\Delta f = f_{{в}} - f_{{н}} = {m_4b5b.f_high:.1f} - {m_4b5b.f_low:.2f} = {m_4b5b.bandwidth:.2f} \\text{{ МГц}}$$"
+    )
+    report_lines.append("")
+
     report_lines.append(f"- Уровней сигнала: {m_4b5b.signal_levels}")
     report_lines.append(f"- Макс. серия нулей: {m_4b5b.max_consecutive_zeros}")
     report_lines.append("")
@@ -277,12 +524,58 @@ def generate_report(
     report_lines.append("![Scrambled NRZ](../output/report_scrambled.png)")
     report_lines.append("")
     report_lines.append("**Характеристики:**")
-    report_lines.append(f"- Верхняя граница частоты: **{m_scrambled.f_high:.2f} МГц**")
-    report_lines.append(f"- Нижняя граница частоты: **{m_scrambled.f_low:.2f} МГц**")
+    report_lines.append("")
+
+    max_zeros_before = find_max_consecutive(bits, 0)
+    max_zeros_after = m_scrambled.max_consecutive_zeros
+
+    report_lines.append("**Верхняя граница частоты:**")
+    report_lines.append("")
     report_lines.append(
-        f"- Требуемая полоса пропускания: **{m_scrambled.bandwidth:.2f} МГц**"
+        f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{bit_rate:.0f}}}{{2}} = {m_scrambled.f_high:.1f} \\text{{ МГц}}$$"
     )
+    report_lines.append("")
+    report_lines.append(
+        "Скремблирование не меняет битовую скорость и не добавляет избыточности, "
+        "поэтому верхняя граница частоты такая же, как у обычного NRZ."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Нижняя граница частоты:**")
+    report_lines.append("")
+    nmax_scrambled = max(max_zeros_after, 1)
+    report_lines.append(
+        f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot N_{{max}}}} = "
+        f"\\frac{{{bit_rate:.0f}}}{{2 \\cdot {nmax_scrambled}}} = "
+        f"\\frac{{{bit_rate:.0f}}}{{2 * {nmax_scrambled}}} = "
+        f"{m_scrambled.f_low:.2f} \\text{{ МГц}}$$"
+    )
+    report_lines.append("")
+    report_lines.append(
+        f"где $N_{{max}} = {nmax_scrambled}$ — максимальная серия нулей после скремблирования "
+        f"(до: {max_zeros_before}, после: {max_zeros_after})"
+    )
+    report_lines.append("")
+    report_lines.append(
+        "Скремблирование разбивает длинные последовательности нулей путём XOR с "
+        "псевдослучайной последовательностью, заданной полиномом. "
+        "В результате $N_{max}$ уменьшается, что поднимает нижнюю границу частоты "
+        "и сужает требуемую полосу пропускания."
+    )
+    report_lines.append("")
+
+    report_lines.append("**Полоса пропускания:**")
+    report_lines.append("")
+    report_lines.append(
+        f"$$\\Delta f = f_{{в}} - f_{{н}} = {m_scrambled.f_high:.1f} - {m_scrambled.f_low:.2f} = {m_scrambled.bandwidth:.2f} \\text{{ МГц}}$$"
+    )
+    report_lines.append("")
+
     report_lines.append(f"- Уровней сигнала: {m_scrambled.signal_levels}")
+    report_lines.append(
+        f"- Постоянная составляющая (DC): {'Да' if m_scrambled.has_dc_component else 'Нет'}"
+    )
+    report_lines.append(f"- Макс. серия нулей: {max_zeros_after}")
     report_lines.append("")
 
     report_lines.append("## 6. Сводная таблица характеристик")
@@ -308,59 +601,157 @@ def generate_report(
 
     report_lines.append("## 7. Формулы для расчёта частот")
     report_lines.append("")
-    report_lines.append("### Основные формулы")
+    report_lines.append("### Общие определения")
     report_lines.append("")
+    report_lines.append("- $C$ — скорость передачи данных (бит/с)")
+    report_lines.append("- $N_{max}$ — максимальная длина серии одинаковых бит подряд")
     report_lines.append(
-        "- **Максимальная частота**: f_в = C / 2 (для двухуровневых сигналов NRZ, 4B/5B, скремблирование)"
+        "- $f_{в}$ — верхняя граница частоты (максимальная частота спектра)"
     )
     report_lines.append(
-        "- **Максимальная частота (Manch)**: f_в = C (для манчестерского кодирования)"
+        "- $f_{н}$ — нижняя граница частоты (минимальная существенная частота)"
+    )
+    report_lines.append("- $\\Delta f$ — требуемая полоса пропускания")
+    report_lines.append("")
+    report_lines.append(
+        "Верхняя граница $f_{в}$ определяется минимальной длительностью элемента сигнала: "
+        "чем короче импульс, тем выше частоты в его спектре. "
+        "Нижняя граница $f_{н}$ зависит от максимальной повторяющейся структуры в данных — "
+        "длинная серия одинаковых бит создаёт низкочастотный сигнал."
+    )
+    report_lines.append("")
+    report_lines.append("### Формулы по методам")
+    report_lines.append("")
+
+    report_lines.append(
+        "| Метод | Формула $f_{в}$ | Формула $f_{н}$ | Формула $\\Delta f$ |"
     )
     report_lines.append(
-        "- **Минимальная частота**: f_н = C / (2 × N_max), где N_max — максимальная серия нулей"
+        "|-------|-----------------|-----------------|---------------------|"
     )
-    report_lines.append("- **Требуемая полоса**: Δf = f_в - f_н")
+    report_lines.append("| NRZ | $C/2$ | $C/(2 \\cdot N_{max})$ | $f_{в} - f_{н}$ |")
+    report_lines.append("| Manchester | $C$ | $C/2$ | $f_{в} - f_{н}$ |")
+    report_lines.append("| RZ | $C$ | $C/4$ | $f_{в} - f_{н}$ |")
+    report_lines.append(
+        "| AMI | $C/2$ | $C/(2 \\cdot (N_{max}+1))$ | $f_{в} - f_{н}$ |"
+    )
+    report_lines.append(
+        "| 4B/5B+NRZ | $C_{кан}/2$ | $C_{кан}/(2 \\cdot 4)$ | $f_{в} - f_{н}$ |"
+    )
+    report_lines.append(
+        "| Scrambled NRZ | $C/2$ | $C/(2 \\cdot N_{max})$ | $f_{в} - f_{н}$ |"
+    )
     report_lines.append("")
-    report_lines.append("### Расчёт для методов")
+
+    report_lines.append("### Расчёт для каждого метода")
     report_lines.append("")
-    report_lines.append("| Метод | f_в (МГц) | f_н (МГц) | Δf (МГц) | Примечание |")
-    report_lines.append("|-------|-----------|-----------|----------|------------|")
 
     for m in metrics_list:
-        note = ""
+        report_lines.append(f"#### {m.encoding_name}")
+        report_lines.append("")
+
         if m.encoding_name == "NRZ":
-            note = "N_max = 4"
+            nmax = max(m.max_consecutive_zeros, m.max_consecutive_ones)
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{m.bit_rate:.0f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot N_{{max}}}} = "
+                f"\\frac{{{m.bit_rate:.0f}}}{{2 \\cdot {nmax}}} = {m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
+
         elif "Manchester" in m.encoding_name:
-            note = "Переход каждый бит"
+            report_lines.append(f"$$f_{{в}} = C = {m.bit_rate:.0f} \\text{{ МГц}}$$")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2}} = \\frac{{{m.bit_rate:.0f}}}{{2}} = {m.f_low:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.0f} - {m.f_low:.1f} = {m.bandwidth:.1f} \\text{{ МГц}}$$"
+            )
+
         elif m.encoding_name == "RZ":
-            note = "N_max = 2"
+            report_lines.append(f"$$f_{{в}} = C = {m.bit_rate:.0f} \\text{{ МГц}}$$")
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{4}} = \\frac{{{m.bit_rate:.0f}}}{{4}} = {m.f_low:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.0f} - {m.f_low:.1f} = {m.bandwidth:.1f} \\text{{ МГц}}$$"
+            )
+
         elif m.encoding_name == "AMI":
-            note = "N_max = 5"
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{m.bit_rate:.0f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot (N_{{max}} + 1)}} = "
+                f"\\frac{{{m.bit_rate:.0f}}}{{2 \\cdot ({m.max_consecutive_zeros} + 1)}} = "
+                f"\\frac{{{m.bit_rate:.0f}}}{{2 \\cdot {m.max_consecutive_zeros + 1}}} = "
+                f"{m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
+
         elif m.encoding_name == "4B/5B+NRZ":
-            note = f"C = {m_4b5b.channel_rate:.0f} Мбит/с"
+            report_lines.append(
+                f"$$C_{{кан}} = C \\cdot k = {m.bit_rate:.0f} \\cdot {m.expansion_factor:.2f} = {m.channel_rate:.1f} \\text{{ Мбит/с}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C_{{кан}}}}{{2}} = \\frac{{{m.channel_rate:.1f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C_{{кан}}}}{{2 \\cdot 4}} = \\frac{{{m.channel_rate:.1f}}}{{8}} = {m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
+
         elif "Scrambled" in m.encoding_name:
-            note = "N_max = 3"
+            nmax = max(m.max_consecutive_zeros, 1)
+            report_lines.append(
+                f"$$f_{{в}} = \\frac{{C}}{{2}} = \\frac{{{m.bit_rate:.0f}}}{{2}} = {m.f_high:.1f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$f_{{н}} = \\frac{{C}}{{2 \\cdot N_{{max}}}} = "
+                f"\\frac{{{m.bit_rate:.0f}}}{{2 \\cdot {nmax}}} = {m.f_low:.2f} \\text{{ МГц}}$$"
+            )
+            report_lines.append("")
+            report_lines.append(
+                f"$$\\Delta f = f_{{в}} - f_{{н}} = {m.f_high:.1f} - {m.f_low:.2f} = {m.bandwidth:.2f} \\text{{ МГц}}$$"
+            )
 
-        f_high = f"{m.f_high:.1f}"
-        f_low = f"{m.f_low:.1f}"
-        bw = f"{m.bandwidth:.1f}"
-        report_lines.append(
-            f"| {m.encoding_name} | {f_high} | {f_low} | {bw} | {note} |"
-        )
-
-    report_lines.append("")
+        report_lines.append("")
     report_lines.append("## 8. Выводы")
     report_lines.append("")
     report_lines.append("### Анализ результатов")
     report_lines.append("")
 
     min_bandwidth = min(m.bandwidth for m in metrics_list)
-    # best_methods = [m for m in metrics_list if m.bandwidth == min_bandwidth]
+    best_methods = [m for m in metrics_list if m.bandwidth == min_bandwidth]
+    best_names = ", ".join(m.encoding_name for m in best_methods)
 
     report_lines.append(
-        f"1. **Минимальную полосу пропускания** требуют методы NRZ, AMI и Scrambled NRZ: **{min_bandwidth:.1f} МГц**. "
+        f"1. **Минимальную полосу пропускания** требует метод {best_names}: **{min_bandwidth:.1f} МГц**. "
     )
-    report_lines.append(f"   Это связано с тем, что их максимальная частота равна C/2.")
+    report_lines.append(
+        f"   Это достигается благодаря уменьшению $N_{{max}}$ скремблированием, "
+        f"что поднимает нижнюю границу частоты $f_{{н}}$ и сужает полосу."
+    )
     report_lines.append("")
 
     no_dc_methods = [m for m in metrics_list if not m.has_dc_component]
@@ -368,7 +759,10 @@ def generate_report(
         f"2. **Отсутствие постоянной составляющей (DC)** имеют {len(no_dc_methods)} методов: "
     )
     report_lines.append(", ".join([m.encoding_name for m in no_dc_methods]) + ". ")
-    report_lines.append("Это важно для систем с трансформаторной развязкой.")
+    report_lines.append(
+        "Это важно для систем с трансформаторной развязкой, где постоянная "
+        "составляющая не может проходить через трансформатор."
+    )
     report_lines.append("")
 
     nrz_metrics = next(m for m in metrics_list if m.encoding_name == "NRZ")
@@ -378,10 +772,15 @@ def generate_report(
 
     report_lines.append("3. **Сравнение NRZ и Manchester:**")
     report_lines.append(
-        f"   - Manchester требует полосу в 2 раза больше ({manchester_metrics.bandwidth:.1f} vs {nrz_metrics.bandwidth:.1f} МГц)"
+        f"   - Manchester требует полосу в {manchester_metrics.bandwidth / nrz_metrics.bandwidth:.1f} раза больше "
+        f"({manchester_metrics.bandwidth:.1f} vs {nrz_metrics.bandwidth:.1f} МГц)"
     )
     report_lines.append(
         "   - Но Manchester обеспечивает гарантированную синхронизацию благодаря переходу в середине каждого бита"
+    )
+    report_lines.append(
+        "   - У Manchester нет зависимости от данных: полоса всегда одна и та же, "
+        "в отличие от NRZ, где $f_{н}$ зависит от $N_{max}$ в конкретном сообщении"
     )
     report_lines.append("")
 
@@ -403,7 +802,7 @@ def generate_report(
         f"   - Сокращает максимальную серию нулей с {find_max_consecutive(bits, 0)} до {find_max_consecutive(scrambled_bits, 0)}"
     )
     report_lines.append(
-        f"   - Полоса остаётся как у NRZ: {m_scrambled.bandwidth:.1f} МГц"
+        f"   - Полоса сужается с {nrz_metrics.bandwidth:.1f} до {m_scrambled.bandwidth:.1f} МГц благодаря уменьшению $N_{{max}}$"
     )
     report_lines.append("")
 

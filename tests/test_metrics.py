@@ -70,7 +70,7 @@ class TestManchesterMetrics:
         assert m.encoding_name == "Manchester (IEEE)"
         assert m.f_high == 100.0
         assert m.f_low == 50.0
-        assert m.bandwidth == 100.0
+        assert m.bandwidth == 50.0
         assert m.signal_levels == 2
         assert m.has_dc_component == False
 
@@ -83,7 +83,7 @@ class TestRZMetrics:
         assert m.encoding_name == "RZ"
         assert m.f_high == 100.0
         assert m.f_low == 25.0
-        assert m.bandwidth == 100.0
+        assert m.bandwidth == 75.0
         assert m.signal_levels == 3
         assert m.has_dc_component == False
 
