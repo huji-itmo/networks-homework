@@ -197,7 +197,7 @@ def calculate_4b5b_nrz_metrics(
     m.max_consecutive_zeros = 3
 
     m.f_high = m.channel_rate / 2
-    m.f_low = m.channel_rate / (2 * 4)
+    m.f_low = m.channel_rate / (2 * 3)
     m.f_avg = calculate_weighted_avg_frequency(encoded_bits, m.channel_rate, "nrz")
 
     m.notes.append(
